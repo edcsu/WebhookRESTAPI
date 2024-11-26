@@ -6,8 +6,8 @@
         
         public DateTimeOffset Timestamp { get; set; }
         
-        public string EventType { get; set; }
-        
-        public string Payload { get; set; }
+        public EventType EventType { get; set; }
+
+        public string Payload { get; set; } = default!;
     }
 }
