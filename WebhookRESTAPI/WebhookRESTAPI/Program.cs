@@ -1,5 +1,6 @@
 
 using WebhookRESTAPI.Core;
+using WebhookRESTAPI.Data;
 
 namespace WebhookRESTAPI
 {
@@ -28,6 +29,8 @@ namespace WebhookRESTAPI
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
+            
+            SeedData.Initialize(app);
 
             var summaries = new[]
             {
