@@ -1,0 +1,6 @@
+@WebhookRESTAPI_HostAddress = http://localhost:5174
+
+GET {{WebhookRESTAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
