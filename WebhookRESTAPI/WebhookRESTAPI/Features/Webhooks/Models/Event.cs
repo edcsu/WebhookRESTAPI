@@ -1,9 +1,9 @@
-﻿namespace WebhookRESTAPI.Features.Webhooks.Models
+﻿using WebhookRESTAPI.Core;
+
+namespace WebhookRESTAPI.Features.Webhooks.Models
 {
-    public class Event
+    public class Event : BaseModel
     {
-        public Guid Id { get; set; }
-        
         public DateTimeOffset Timestamp { get; set; }
         
         public EventType EventType { get; set; }
