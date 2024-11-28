@@ -1,4 +1,5 @@
 
+using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
@@ -16,14 +17,14 @@ namespace WebhookRESTAPI
         public static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Override("Microsoft.AspNetCore.Hosting", LogEventLevel.Information)
-                .MinimumLevel.Override("Microsoft.AspNetCore.Routing", LogEventLevel.Information)
+                .MinimumLevel.Override("Microsoft.AspNetCore.Hosting", LogEventLevel.Warning)
+                .MinimumLevel.Override("Microsoft.AspNetCore.Routing", LogEventLevel.Warning)
                 .Enrich.WithProperty("Application", "Webhook")
                 .WriteTo.Console(Formatters.CreateConsoleTextFormatter(theme: TemplateTheme.Code))
                 .WriteTo.Debug()
                 .WriteTo.Trace()
-                .WriteTo.File("Applog.log", rollingInterval: RollingInterval.Hour)
-                .WriteTo.File(new CompactJsonFormatter(), "Applog.json", rollingInterval: RollingInterval.Hour)
+                .WriteTo.File("Logs/applog.log", rollingInterval: RollingInterval.Hour)
+                .WriteTo.File(new CompactJsonFormatter(), "Logs/applog.json", rollingInterval: RollingInterval.Hour)
                 .CreateLogger();
 
             using var listener = new ActivityListenerConfiguration()
@@ -41,7 +42,10 @@ namespace WebhookRESTAPI
                 builder.AddApiServices();
 
                 builder.Services.AddSerilog();
+                
                 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+                //builder.Services.AddEndpointsApiExplorer();
+                //builder.Services.AddSwaggerGen(); 
                 builder.Services.AddOpenApi();
 
                 var app = builder.Build();
@@ -49,8 +53,18 @@ namespace WebhookRESTAPI
                 // Configure the HTTP request pipeline.
                 if (app.Environment.IsDevelopment())
                 {
-                    app.MapOpenApi();
                 }
+                app.MapOpenApi();
+
+                app.MapScalarApiReference(options =>
+                {
+                    options.Title = "Webhook API";
+                    options.Theme = ScalarTheme.Default;
+                    options.ShowSidebar = true;
+                    options.DarkMode = true;
+                    options.EndpointPathPrefix = "/docs/{documentName}";
+                    options.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.HttpClient);
+                });
 
                 app.UseHttpsRedirection();
 
