@@ -25,8 +25,7 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
             .ProducesValidationProblem()
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status500InternalServerError)
-            .Produces(StatusCodes.Status503ServiceUnavailable)
-            .RequireAuthorization();
+            .Produces(StatusCodes.Status503ServiceUnavailable);
         }
     }
 }
