@@ -21,6 +21,17 @@ namespace WebhookRESTAPI.Core
                     options.EnableRetryOnFailure();
                 });
             });
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy(ApiConstants.AllowedClients, policy =>
+                {
+                    policy
+                    .AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+                });
+            });
         }
     }
 }

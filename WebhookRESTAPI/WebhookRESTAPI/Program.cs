@@ -49,6 +49,8 @@ namespace WebhookRESTAPI
                 builder.Services.AddOpenApi();
 
                 var app = builder.Build();
+                
+                app.UseCors(ApiConstants.AllowedClients);
 
                 // Configure the HTTP request pipeline.
                 if (app.Environment.IsDevelopment())
