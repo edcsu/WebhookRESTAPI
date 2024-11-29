@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
 using WebhookRESTAPI.Core.Extensions;
 using WebhookRESTAPI.Data;
@@ -14,7 +15,7 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
             string groupName = "Webhooks";
             var group = app.MapGroup("api/webhooks");
 
-            group.MapPost("/{eventType}", (
+            group.MapPost("/{eventType}", async (
                 string eventType,
                 [FromServices] ApplicationDbContext dbContext,
                 HttpRequest request,
@@ -47,6 +48,31 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
                                 }
                         });
                 }
+
+                using var stream = new StreamReader(request.Body);
+                var requestBody = await stream.ReadToEndAsync();
+                if (string.IsNullOrWhiteSpace(requestBody))
+                {
+                    return Results.ValidationProblem(
+                        new Dictionary<string, string[]>
+                        {
+                                { "eventType",
+                                    [
+                                        "Request body is missing"
+                                    ]
+                                }
+                        });
+                }
+                var newEvent = new Event
+                {
+                    EventType = Enum.Parse<EventType>(eventType),
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    Timestamp = DateTimeOffset.UtcNow,
+                    LastUpdated = DateTimeOffset.UtcNow,
+                };
+
+                await dbContext.Events.AddAsync(newEvent, cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
 
                 return Results.Ok();
             })
