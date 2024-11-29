@@ -66,6 +66,7 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
                 var newEvent = new Event
                 {
                     EventType = Enum.Parse<EventType>(eventType),
+                    Payload = requestBody,
                     CreatedAt = DateTimeOffset.UtcNow,
                     Timestamp = DateTimeOffset.UtcNow,
                     LastUpdated = DateTimeOffset.UtcNow,
