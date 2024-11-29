@@ -26,11 +26,11 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
                     return Results.ValidationProblem(
                         new Dictionary<string, string[]>
                         {
-                                { "eventType",
-                                    [
-                                        "eventType cannot be null empty or whitespace"
-                                    ]
-                                }
+                            { "eventType",
+                                [
+                                    "eventType cannot be null empty or whitespace"
+                                ]
+                            }
                         });
                 }
 
@@ -41,28 +41,31 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
                     return Results.ValidationProblem(
                         new Dictionary<string, string[]>
                         {
-                                { "eventType",
-                                    [
-                                        $"These are the accepted event types: {eventTypeNames.StringJoin(",")}"
-                                    ]
-                                }
+                            { "eventType",
+                                [
+                                    $"These are the accepted event types: {eventTypeNames.StringJoin(",")}"
+                                ]
+                            }
                         });
                 }
 
                 using var stream = new StreamReader(request.Body);
-                var requestBody = await stream.ReadToEndAsync();
+                var requestBody = await stream.ReadToEndAsync(cancellationToken);
+                
                 if (string.IsNullOrWhiteSpace(requestBody))
                 {
                     return Results.ValidationProblem(
                         new Dictionary<string, string[]>
                         {
-                                { "eventType",
-                                    [
-                                        "Request body is missing"
-                                    ]
-                                }
-                        });
+                            { "eventType",
+                                [
+                                    "Request body is missing"
+                                ]
+                            }
+                        }
+                    );
                 }
+
                 var newEvent = new Event
                 {
                     EventType = Enum.Parse<EventType>(eventType),
