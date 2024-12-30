@@ -1,6 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Runtime;
+using FluentValidation;
 using WebhookRESTAPI.Data;
+using WebhookRESTAPI.Features.Webhooks.Validators;
+using WebhookRESTAPI.Features.Webhooks.ViewModels;
 
 namespace WebhookRESTAPI.Core
 {
@@ -16,11 +19,13 @@ namespace WebhookRESTAPI.Core
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"), options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"), opts =>
                 {
-                    options.EnableRetryOnFailure();
+                    opts.EnableRetryOnFailure();
                 });
             });
+
+            builder.Services.AddScoped<IValidator<SubscriptionCreateModel>, SubscriptionCreateModelValidator>();
 
             builder.Services.AddCors(options =>
             {

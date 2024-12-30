@@ -9,7 +9,7 @@
 
         Note, // (Note posted, note updated)
 
-        Project, // (Some project created, project dissabled)
+        Project, // (Some project created, project disabled)
 
         Milestone // (Milestone created, milestone is done etc...)
 

@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
+using FluentValidation;
 using WebhookRESTAPI.Core.Extensions;
 using WebhookRESTAPI.Data;
 using WebhookRESTAPI.Features.Webhooks.Models;
+using WebhookRESTAPI.Features.Webhooks.ViewModels;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebhookRESTAPI.Features.Webhooks.Endpoints
@@ -12,7 +14,7 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
     {
         public static void MapWebhookEndpoints(this WebApplication app)
         {
-            string groupName = "Webhooks";
+            const string groupName = "Webhooks";
             var group = app.MapGroup("api/webhooks");
 
             group.MapPost("/{eventType}", async (
@@ -34,7 +36,6 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
                         });
                 }
 
-                eventType = eventType.ToLowerInvariant();
                 var eventTypeNames = Enum.GetNames<EventType>().ToList();
                 if (!eventTypeNames.Contains(eventType))
                 {
@@ -79,6 +80,48 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
                 await dbContext.SaveChangesAsync(cancellationToken);
 
                 return Results.Ok();
+            })
+            .WithTags(groupName)
+            .WithDescription("Creates a webhook event")
+            .WithSummary("Create a webhook event")
+            .Produces(StatusCodes.Status200OK)
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status500InternalServerError)
+            .Produces(StatusCodes.Status503ServiceUnavailable);
+            
+            group.MapPost("/subscribe", async (
+                [FromBody] SubscriptionCreateModel createModel,
+                [FromServices] ApplicationDbContext dbContext,
+                [FromServices] IValidator<SubscriptionCreateModel> subscriptionCreateModelValidator,
+                HttpRequest request,
+                CancellationToken cancellationToken) =>
+            {
+                var validationResult = await subscriptionCreateModelValidator.ValidateAsync(createModel, cancellationToken);
+                if (!validationResult.IsValid)
+                {
+                    return Results.ValidationProblem(validationResult.ToDictionary());
+                }
+
+                var newSubscription = new Subscription
+                {
+                    SubscriberId = createModel.SubscriberId,
+                    EventType = createModel.EventType,
+                    CallbackUrl = createModel.CallbackUrl,
+                    Secret = createModel.Secret,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    LastUpdated = DateTimeOffset.UtcNow,
+                };
+
+                var createdSubscription= await dbContext.Subscriptions.AddAsync(newSubscription, cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
+
+                var savedSubscription = new SubscriptionViewModel(createdSubscription.Entity.SubscriberId, 
+                    createdSubscription.Entity.EventType, 
+                    createdSubscription.Entity.CallbackUrl,
+                    createdSubscription.Entity.Secret);
+                
+                return Results.Ok(savedSubscription);
             })
             .WithTags(groupName)
             .WithDescription("Creates a webhook event")
