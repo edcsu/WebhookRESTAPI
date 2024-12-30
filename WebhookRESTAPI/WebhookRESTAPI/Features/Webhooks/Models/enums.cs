@@ -3,15 +3,15 @@
     public enum EventType
     {
         // Take this as an example, you can implement any event source you like.
-        hook, //(Hook created, Hook deleted ...)
+        Hook, //(Hook created, Hook deleted ...)
 
-        file, // (Some file uploaded, file deleted)
+        File, // (Some file uploaded, file deleted)
 
-        note, // (Note posted, note updated)
+        Note, // (Note posted, note updated)
 
-        project, // (Some project created, project dissabled)
+        Project, // (Some project created, project disabled)
 
-        milestone // (Milestone created, milestone is done etc...)
+        Milestone // (Milestone created, milestone is done etc...)
 
         //etc etc.. You can define your custom events types....
     }
