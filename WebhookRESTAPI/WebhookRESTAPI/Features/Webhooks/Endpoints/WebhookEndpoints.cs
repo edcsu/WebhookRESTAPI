@@ -126,8 +126,8 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
                 return Results.Ok(savedSubscription);
             })
             .WithTags(groupName)
-            .WithDescription("Creates a webhook event")
-            .WithSummary("Create a webhook event")
+            .WithDescription("Creates a subscription to a webhook event")
+            .WithSummary("Create a subscription")
             .Produces<SubscriptionViewModel>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
             .Produces(StatusCodes.Status404NotFound)

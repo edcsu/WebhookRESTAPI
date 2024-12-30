@@ -1,4 +1,6 @@
 
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Http.Json;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Events;
@@ -42,7 +44,12 @@ namespace WebhookRESTAPI
                 builder.AddApiServices();
 
                 builder.Services.AddSerilog();
-
+                
+                builder.Services.Configure<JsonOptions>(options =>
+                {
+                    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
+                
                 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen();
