@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using WebhookRESTAPI.Core.Extensions;
 using WebhookRESTAPI.Data;
 using WebhookRESTAPI.Features.Webhooks.Models;
@@ -86,7 +87,6 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
             .WithSummary("Create a webhook event")
             .Produces(StatusCodes.Status200OK)
             .ProducesValidationProblem()
-            .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status500InternalServerError)
             .Produces(StatusCodes.Status503ServiceUnavailable);
             
@@ -130,7 +130,46 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
             .WithSummary("Create a subscription")
             .Produces<SubscriptionViewModel>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
-            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status500InternalServerError)
+            .Produces(StatusCodes.Status503ServiceUnavailable);
+            
+            group.MapGet("/{subscriberId:guid}", async (
+                Guid subscriberId,
+                [FromServices] ApplicationDbContext dbContext,
+                HttpRequest request,
+                CancellationToken cancellationToken) =>
+            {
+                if (Guid.Empty == subscriberId)
+                {
+                    return Results.ValidationProblem(
+                        new Dictionary<string, string[]>
+                        {
+                            { "subscriberId",
+                                [
+                                    "Subscriber Id is empty"
+                                ]
+                            }
+                        });
+                }
+
+                var subscriptions= await dbContext.Subscriptions
+                    .Where(sub => sub.SubscriberId == subscriberId)
+                    .OrderByDescending(item => item.CreatedAt)
+                    .Select(it => new SubscriptionViewModel(
+                        it.Id,
+                        it.SubscriberId, 
+                        it.EventType, 
+                        it.CallbackUrl,
+                        it.Secret))
+                    .ToListAsync(cancellationToken);
+
+                return Results.Ok(subscriptions);
+            })
+            .WithTags(groupName)
+            .WithDescription("Gets a list subscriptions based on the subscriber.")
+            .WithSummary("Get subscriptions")
+            .Produces<List<SubscriptionViewModel>>(StatusCodes.Status200OK)
+            .ProducesValidationProblem()
             .Produces(StatusCodes.Status500InternalServerError)
             .Produces(StatusCodes.Status503ServiceUnavailable);
         }
