@@ -213,6 +213,56 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status500InternalServerError)
             .Produces(StatusCodes.Status503ServiceUnavailable);
+            
+            group.MapPut("/{subscriptionId:guid}", async (
+                Guid subscriptionId,
+                [FromBody] SubscriptionUpdateModel updateModel,
+                [FromServices] ApplicationDbContext dbContext,
+                [FromServices] IValidator<SubscriptionUpdateModel> subscriptionUpdateModelValidator,
+                HttpRequest request,
+                CancellationToken cancellationToken) =>
+            {
+                if (Guid.Empty == subscriptionId)
+                {
+                    return Results.ValidationProblem(
+                        new Dictionary<string, string[]>
+                        {
+                            { "subscriptionId",
+                                [
+                                    "subscription Id is empty"
+                                ]
+                            }
+                        });
+                }
+                
+                var validationResult = await subscriptionUpdateModelValidator.ValidateAsync(updateModel, cancellationToken);
+                if (!validationResult.IsValid)
+                {
+                    return Results.ValidationProblem(validationResult.ToDictionary());
+                }
+                
+                var subscription= await dbContext.Subscriptions
+                                            .FirstOrDefaultAsync(sub => sub.SubscriberId == subscriptionId && sub.IsActive, cancellationToken);
+                if (subscription is null)
+                    return Results.NotFound();
+                
+                subscription.CallbackUrl = updateModel.CallbackUrl;
+                subscription.Secret = updateModel.Secret;
+                subscription.LastUpdated = DateTimeOffset.UtcNow;
+
+                var updatedSubscription = dbContext.Subscriptions.Update(subscription);
+                await dbContext.SaveChangesAsync(cancellationToken);
+
+                return Results.Ok();
+            })
+            .WithTags(groupName)
+            .WithDescription("Updates a subscription")
+            .WithSummary("Update a subscription")
+            .Produces(StatusCodes.Status200OK)
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status500InternalServerError)
+            .Produces(StatusCodes.Status503ServiceUnavailable);
         }
     }
 }

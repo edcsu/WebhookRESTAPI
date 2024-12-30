@@ -26,6 +26,8 @@ namespace WebhookRESTAPI.Core
             });
 
             builder.Services.AddScoped<IValidator<SubscriptionCreateModel>, SubscriptionCreateModelValidator>();
+            
+            builder.Services.AddScoped<IValidator<SubscriptionUpdateModel>, SubscriptionUpdateModelValidator>();
 
             builder.Services.AddCors(options =>
             {

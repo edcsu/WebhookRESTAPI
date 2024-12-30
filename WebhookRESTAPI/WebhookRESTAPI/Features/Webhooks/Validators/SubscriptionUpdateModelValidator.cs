@@ -3,18 +3,16 @@ using WebhookRESTAPI.Features.Webhooks.ViewModels;
 
 namespace WebhookRESTAPI.Features.Webhooks.Validators;
 
-public class SubscriptionCreateModelValidator : AbstractValidator<SubscriptionCreateModel>
+public class SubscriptionUpdateModelValidator : AbstractValidator<SubscriptionUpdateModel>
 {
-    public SubscriptionCreateModelValidator()
+    public SubscriptionUpdateModelValidator()
     {
-        RuleFor(sub => sub.SubscriberId).NotEmpty();
-        
-        RuleFor(sub => sub.EventType).IsInEnum();
         
         RuleFor(sub => sub.CallbackUrl)
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
-            .MaximumLength(30);
+            .MaximumLength(30)
+            .When(it => string.IsNullOrWhiteSpace(it.CallbackUrl));
         
         RuleFor(sub => sub.Secret).MaximumLength(60)
             .When(it => string.IsNullOrWhiteSpace(it.Secret));
