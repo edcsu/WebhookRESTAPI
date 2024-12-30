@@ -116,7 +116,9 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
                 var createdSubscription= await dbContext.Subscriptions.AddAsync(newSubscription, cancellationToken);
                 await dbContext.SaveChangesAsync(cancellationToken);
 
-                var savedSubscription = new SubscriptionViewModel(createdSubscription.Entity.SubscriberId, 
+                var savedSubscription = new SubscriptionViewModel(
+                    createdSubscription.Entity.Id,
+                    createdSubscription.Entity.SubscriberId, 
                     createdSubscription.Entity.EventType, 
                     createdSubscription.Entity.CallbackUrl,
                     createdSubscription.Entity.Secret);
@@ -126,7 +128,7 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
             .WithTags(groupName)
             .WithDescription("Creates a webhook event")
             .WithSummary("Create a webhook event")
-            .Produces(StatusCodes.Status200OK)
+            .Produces<SubscriptionViewModel>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status500InternalServerError)
