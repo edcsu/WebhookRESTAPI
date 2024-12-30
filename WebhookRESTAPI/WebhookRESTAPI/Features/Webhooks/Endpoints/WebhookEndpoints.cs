@@ -153,7 +153,7 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
                 }
 
                 var subscriptions= await dbContext.Subscriptions
-                    .Where(sub => sub.SubscriberId == subscriberId)
+                    .Where(sub => sub.SubscriberId == subscriberId && sub.IsActive)
                     .OrderByDescending(item => item.CreatedAt)
                     .Select(it => new SubscriptionViewModel(
                         it.Id,
@@ -170,6 +170,47 @@ namespace WebhookRESTAPI.Features.Webhooks.Endpoints
             .WithSummary("Get subscriptions")
             .Produces<List<SubscriptionViewModel>>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
+            .Produces(StatusCodes.Status500InternalServerError)
+            .Produces(StatusCodes.Status503ServiceUnavailable);
+            
+            group.MapDelete("/{subscriptionId:guid}", async (
+                Guid subscriptionId,
+                [FromServices] ApplicationDbContext dbContext,
+                HttpRequest request,
+                CancellationToken cancellationToken) =>
+            {
+                if (Guid.Empty == subscriptionId)
+                {
+                    return Results.ValidationProblem(
+                        new Dictionary<string, string[]>
+                        {
+                            { "subscriptionId",
+                                [
+                                    "subscription Id is empty"
+                                ]
+                            }
+                        });
+                }
+
+                var subscription= await dbContext.Subscriptions
+                                            .FirstOrDefaultAsync(sub => sub.SubscriberId == subscriptionId && sub.IsActive, cancellationToken);
+                if (subscription is null)
+                    return Results.NotFound();
+                
+                subscription.IsActive = false;
+                subscription.LastUpdated = DateTimeOffset.UtcNow;
+
+                var updatedSubscription = dbContext.Subscriptions.Update(subscription);
+                await dbContext.SaveChangesAsync(cancellationToken);
+
+                return Results.Ok();
+            })
+            .WithTags(groupName)
+            .WithDescription("Deletes a subscription")
+            .WithSummary("Delete subscription")
+            .Produces(StatusCodes.Status200OK)
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status500InternalServerError)
             .Produces(StatusCodes.Status503ServiceUnavailable);
         }
